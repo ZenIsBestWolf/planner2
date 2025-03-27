@@ -21,13 +21,13 @@ jobs:
         node-version: ${{ matrix.node-version }}
 
     - name: Build
-      run: npm ci
+      run: npm ci && npm run build
 
     - name: Upload artifacts
       id: deployment
       uses: actions/upload-pages-artifact@v3
       with:
-        path: ${{ github.workspace }}/dist/
+        path: dist/
 
   deploy:
     environment:
