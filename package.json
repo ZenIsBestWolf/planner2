@@ -6,6 +6,7 @@
     "name": "Zen Dignan",
     "url": "https://dignan.dev/"
   },
+  "private": true,
   "scripts": {
     "lint": "eslint . --cache",
     "build": "rimraf -rf dist && webpack --config webpack.config.js",
