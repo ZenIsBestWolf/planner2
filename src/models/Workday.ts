@@ -2,7 +2,7 @@ export interface RemoteResponse {
   Report_Entry: RemoteEntry[];
 }
 
-interface RemoteEntry {
+export interface RemoteEntry {
   Course_Section_Start_Date: string;
   CF_LRV_Cluster_Ref_ID: string; // cloudflare???
   Student_Course_Section_Cluster: string;

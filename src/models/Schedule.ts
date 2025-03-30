@@ -1,17 +1,21 @@
+import { Hour, Minute } from './Time';
+
 export interface Schedule {
   readonly courses: Course[];
   readonly subjects: Subject[];
-  // readonly academicYear: string;
 }
 
-type Term = 'A' | 'B' | 'C' | 'D' | 'E1' | 'E2';
+export type Term = 'A' | 'B' | 'C' | 'D' | 'E1' | 'E2';
 
-type Semester = 'Spring' | 'Fall' | 'Summer';
+export type Semester = 'Spring' | 'Fall' | 'Summer';
+
+export type DeliveryMode = 'In-Person' | 'Online' | 'Hybrid';
 
 export interface Course {
   academicLevel: 'Undergraduate' | 'Graduate';
   credits: number;
-  deliveryMode: 'In-Person' | 'Online';
+  code: string;
+  deliveryMode: DeliveryMode;
   endDate: Date;
   enrollment: Capacity;
   format:
@@ -28,22 +32,29 @@ export interface Course {
   startDate: Date;
   subject: Subject;
   tags: Record<string, string>; // this might be able to be improved upon
+  title: string;
   term: Term | Semester;
   waitlist: Capacity;
 }
 
-interface Capacity {
+export interface Capacity {
   remaining: number;
   maximum: number;
   disabled: boolean;
 }
 
-type DayCode = 'M' | 'T' | 'W' | 'R' | 'F';
+export type DayCode = 'M' | 'T' | 'W' | 'R' | 'F';
 
-interface Pattern {
+// Note: We do not inclue the Meridian, Hour is 24-hour.
+export interface CourseTime {
+  hour: Hour;
+  minute: Minute;
+}
+
+export interface Pattern {
   days: DayCode[];
-  startTime: string; // TODO: How to store time irrespective of date?
-  endTime: string;
+  startTime: CourseTime;
+  endTime: CourseTime;
   locationId: string; // FK to Location
 }
 

@@ -1,16 +1,14 @@
 'use strict';
-
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const autoprefixer = require('autoprefixer');
-const path = require('path');
-const { hostname } = require('os');
-
-// const dir = path.join(__dirname, '../');
+import path, { dirname } from 'path';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import autoprefixer from 'autoprefixer';
+import { hostname } from 'os';
+import { fileURLToPath } from 'url';
 
 const prod = process.env.NODE_ENV === 'production';
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-module.exports = {
-  // context: path.join(dir, 'src'),
+export default {
   context: path.join(__dirname, 'src'),
   devtool: 'source-map',
   entry: './index.tsx',
@@ -22,7 +20,6 @@ module.exports = {
   output: {
     chunkFilename: '[name].[contenthash].js',
     filename: '[name].[contenthash].js',
-    // path: path.join(dir, 'dist/frontend'),
     path: path.join(__dirname, 'dist'),
   },
   optimization: prod

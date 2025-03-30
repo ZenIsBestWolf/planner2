@@ -6,3 +6,5 @@ node_modules/
 
 # Local
 dist/
+sample/
+.eslintcache
