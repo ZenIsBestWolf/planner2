@@ -11,10 +11,18 @@ export type Semester = 'Spring' | 'Fall' | 'Summer';
 
 export type DeliveryMode = 'In-Person' | 'Online' | 'Hybrid';
 
-export interface Course {
+export type TermPeriod = Term | Semester;
+
+export interface ShallowCourse {
   academicLevel: 'Undergraduate' | 'Graduate';
   credits: number;
   code: string;
+  notes: string;
+  subject: Subject;
+  title: string;
+}
+
+export interface Course extends ShallowCourse {
   deliveryMode: DeliveryMode;
   endDate: Date;
   enrollment: Capacity;
@@ -27,13 +35,10 @@ export interface Course {
     | 'Seminar'
     | 'Workshop';
   locations: string[]; // FKs to Locations?
-  notes: string;
   patterns: Pattern[]; // meeting patterns
   startDate: Date;
-  subject: Subject;
   tags: Record<string, string>; // this might be able to be improved upon
-  title: string;
-  term: Term | Semester;
+  term: TermPeriod;
   waitlist: Capacity;
 }
 

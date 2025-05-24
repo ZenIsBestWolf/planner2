@@ -10,7 +10,7 @@ export const NavBar: FC = () => {
   }, [isExpanded]);
 
   return (
-    <Navbar expand="md">
+    <Navbar className="bg-danger border-bottom" dark expand="xs">
       <NavbarBrand href="/">Planner</NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse navbar isOpen={isExpanded}>
