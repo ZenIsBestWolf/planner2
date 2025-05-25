@@ -17,6 +17,9 @@ export const CourseRow: FC<{
     <HorizontalStack
       className={`p-2 border-bottom border-dark-subtle ${striped ? `bg-secondary-subtle` : ``}`}
       gap={2}
+      onClick={() => {
+        reporter('selectCourse');
+      }}
     >
       <CourseButton
         isAdded={added}

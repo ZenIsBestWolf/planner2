@@ -84,7 +84,7 @@ export const Time: FC<{ time: CourseTime }> = ({ time }) => {
   );
 };
 
-interface StackProps {
+interface StackProps extends React.HTMLAttributes<HTMLDivElement> {
   readonly children?: ReactNode;
   readonly gap?: 1 | 2 | 3 | 4 | 5;
   readonly className?: string;
@@ -94,9 +94,18 @@ interface InnerStackProps extends StackProps {
   readonly stackStyle: 'vstack' | 'hstack';
 }
 
-const InnerStack: FC<InnerStackProps> = ({ stackStyle, gap, children, className }) => {
+const InnerStack: FC<InnerStackProps> = ({
+  stackStyle,
+  gap,
+  children,
+  className,
+  ...attributes
+}) => {
   return (
-    <div className={`${stackStyle}${gap ? ` gap-${gap}` : ``}${className ? ` ${className}` : ``}`}>
+    <div
+      {...attributes}
+      className={`${stackStyle}${gap ? ` gap-${gap}` : ``}${className ? ` ${className}` : ``}`}
+    >
       {children}
     </div>
   );
