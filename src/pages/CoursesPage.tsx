@@ -1,110 +1,12 @@
 import React, { FC, useCallback, useState } from 'react';
-import { Row, Col } from 'reactstrap';
+import { Col, ListGroup, Row } from 'reactstrap';
 import { CourseRow } from '../components/CourseRow';
-import { Course, ShallowCourse, Subject } from '../models/Schedule';
 import { SubjectRow } from '../components/SubjectRow';
-import { useApp, useUpdateApp } from '../providers';
-import { VerticalStack } from '../components';
+import { Course, ShallowCourse, Subject } from '../models/Schedule';
+import { useApp, useSchedule, useUpdateApp } from '../providers';
 
 export const CoursesPage: FC = () => {
-  const dummyCourse: Course = {
-    academicLevel: 'Undergraduate',
-    credits: 3,
-    code: 'CS 3013',
-    deliveryMode: 'In-Person',
-    endDate: new Date(),
-    enrollment: {
-      disabled: true,
-      remaining: 0,
-      maximum: 30,
-    },
-    format: 'Lecture',
-    locations: ['Fuller Labs Lower'],
-    notes: 'Course code for Undergraduate Operating Systems',
-    patterns: [
-      {
-        days: ['T', 'F'],
-        startTime: {
-          hour: 9,
-          minute: 0,
-        },
-        endTime: {
-          hour: 10,
-          minute: 50,
-        },
-        locationId: 'Fuller Lower',
-      },
-    ],
-    startDate: new Date(),
-    subject: {
-      code: 'CS',
-      name: 'Computer Science',
-    },
-    tags: {},
-    title: 'Operating Systems',
-    term: 'C',
-    waitlist: {
-      disabled: false,
-      remaining: 10,
-      maximum: 20,
-    },
-  };
-
-  const dummyCourse2: Course = {
-    academicLevel: 'Undergraduate',
-    credits: 3,
-    code: 'CS 4341',
-    deliveryMode: 'In-Person',
-    endDate: new Date(),
-    enrollment: {
-      disabled: true,
-      remaining: 0,
-      maximum: 30,
-    },
-    format: 'Lecture',
-    locations: ['Fuller Labs Lower'],
-    notes: 'Course code for Webware',
-    patterns: [
-      {
-        days: ['M', 'R'],
-        startTime: {
-          hour: 9,
-          minute: 0,
-        },
-        endTime: {
-          hour: 10,
-          minute: 50,
-        },
-        locationId: 'Fuller Lower',
-      },
-    ],
-    startDate: new Date(),
-    subject: {
-      code: 'CS',
-      name: 'Computer Science',
-    },
-    tags: {},
-    title: 'Webware',
-    term: 'C',
-    waitlist: {
-      disabled: false,
-      remaining: 10,
-      maximum: 20,
-    },
-  };
-
-  const dummySubjects: Subject[] = [
-    {
-      code: 'CS',
-      name: 'Computer Science',
-    },
-    {
-      code: 'AR',
-      name: 'Art',
-    },
-  ];
-
-  const dummyCourses: Course[] = [dummyCourse, dummyCourse2];
+  const { courses, subjects } = useSchedule();
 
   const [selectedCourse, setSelectedCourse] = useState<ShallowCourse | undefined>();
   const [selectedSubject, setSelectedSubject] = useState<Subject | undefined>();
@@ -112,10 +14,10 @@ export const CoursesPage: FC = () => {
     <Row className="border-bottom border-dark">
       <SubjectBrowserSection
         reporter={setSelectedSubject}
-        subjects={dummySubjects}
+        subjects={subjects}
         selectedSubject={selectedSubject}
       />
-      <CourseBrowserSection reporter={setSelectedCourse} courses={dummyCourses} />
+      <CourseBrowserSection reporter={setSelectedCourse} courses={courses} />
       <CourseInfoSection course={selectedCourse} />
     </Row>
   );
@@ -131,6 +33,7 @@ interface CourseBrowserSectionProps {
 const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ courses, reporter }) => {
   const app = useApp();
   const updateApp = useUpdateApp();
+  const schedule = useSchedule();
 
   const resolveAdded = useCallback(
     (sc: ShallowCourse) => {
@@ -138,6 +41,15 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ courses, reporter
     },
     [app.selectedCourses],
   );
+
+  const getFullCourse = (sc: ShallowCourse): Course | undefined => {
+    const course = schedule.courses.find((v) => {
+      const nv = v as ShallowCourse;
+      return nv === sc;
+    });
+
+    return course;
+  };
 
   const handleReporting = useCallback(
     (sc: ShallowCourse, action: CourseBrowserReducerAction) => {
@@ -171,8 +83,10 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ courses, reporter
 
   return (
     <Col xs="6" className="border-start border-end border-dark p-0">
-      <VerticalStack>
+      <ListGroup>
         {courses.map((course, idx) => {
+          const hash = crypto.randomUUID();
+          const fullCourse = getFullCourse(course);
           return (
             <CourseRow
               striped={idx % 2 === 1}
@@ -180,13 +94,13 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ courses, reporter
                 handleReporting(course, action);
               }}
               added={resolveAdded(course)}
-              key={`course-${course.subject.code}-${course.code}`}
+              key={`course-${course.subject.code}-${course.code}-${hash}`}
               course={course}
-              schedules={['A', 'B', 'C', 'D', 'E1']}
+              schedules={fullCourse ? [fullCourse.term] : []}
             />
           );
         })}
-      </VerticalStack>
+      </ListGroup>
     </Col>
   );
 };
@@ -200,18 +114,20 @@ interface SubjectBrowserSectionProps {
 const SubjectBrowserSection: FC<SubjectBrowserSectionProps> = ({ subjects, reporter }) => {
   return (
     <Col xs="3" className="p-0">
-      {subjects.map((subject, idx) => {
-        return (
-          <SubjectRow
-            report={() => {
-              reporter(subject);
-            }}
-            subject={subject}
-            key={`subject-${subject.code}`}
-            isStriped={idx % 2 === 1}
-          />
-        );
-      })}
+      <ListGroup>
+        {subjects.map((subject, idx) => {
+          return (
+            <SubjectRow
+              report={() => {
+                reporter(subject);
+              }}
+              subject={subject}
+              key={`subject-${subject.code}`}
+              isStriped={idx % 2 === 1}
+            />
+          );
+        })}
+      </ListGroup>
     </Col>
   );
 };

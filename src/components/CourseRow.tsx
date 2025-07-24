@@ -1,5 +1,5 @@
 import React, { FC } from 'react';
-import { Button, ButtonToolbar } from 'reactstrap';
+import { Button, ButtonToolbar, ListGroupItem } from 'reactstrap';
 import { HorizontalStack } from '.';
 import { ShallowCourse, TermPeriod } from '../models/Schedule';
 import { CourseBrowserReducerAction } from '../pages/CoursesPage';
@@ -14,26 +14,31 @@ export const CourseRow: FC<{
   reporter: (action: CourseBrowserReducerAction) => void;
 }> = ({ course, added, reporter, schedules, striped }) => {
   return (
-    <HorizontalStack
-      className={`p-2 border-bottom border-dark-subtle ${striped ? `bg-secondary-subtle` : ``}`}
-      gap={2}
-      onClick={() => {
-        reporter('selectCourse');
-      }}
+    <ListGroupItem
+      flush
+      className={`border-0 rounded-0 p-0${striped ? ' list-group-item-secondary' : ''}`}
     >
-      <CourseButton
-        isAdded={added}
-        reporter={() => {
-          reporter(added ? 'removeCourse' : 'addCourse');
+      <HorizontalStack
+        className={`p-2`}
+        gap={2}
+        onClick={() => {
+          reporter('selectCourse');
         }}
-      />
-      <div>
-        {course.code} - {course.title}
-      </div>
-      {/* Spacer */}
-      <div className="ms-auto" />
-      <TermGroup reporter={noop} schedules={schedules} />
-    </HorizontalStack>
+      >
+        <CourseButton
+          isAdded={added}
+          reporter={() => {
+            reporter(added ? 'removeCourse' : 'addCourse');
+          }}
+        />
+        <div>
+          {course.subject.code} {course.code} - {course.title}
+        </div>
+        {/* Spacer */}
+        <div className="ms-auto" />
+        <TermGroup reporter={noop} schedules={schedules} />
+      </HorizontalStack>
+    </ListGroupItem>
   );
 };
 

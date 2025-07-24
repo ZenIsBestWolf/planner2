@@ -1,6 +1,6 @@
 import React, { FC } from 'react';
 import { Subject } from '../models/Schedule';
-import { Badge } from 'reactstrap';
+import { Badge, ListGroupItem } from 'reactstrap';
 import { HorizontalStack } from '.';
 
 export const SubjectRow: FC<{
@@ -9,14 +9,15 @@ export const SubjectRow: FC<{
   readonly isStriped?: boolean;
 }> = ({ subject, report, isStriped }) => {
   return (
-    <div onClick={report}>
-      <HorizontalStack
-        className={`border-bottom py-1 px-2${isStriped ? ` bg-secondary-subtle` : ``}`}
-        gap={1}
-      >
+    <ListGroupItem
+      className={`border-0 rounded-0 p-0${isStriped ? ' list-group-item-secondary' : ''}`}
+      flush
+      onClick={report}
+    >
+      <HorizontalStack className={`py-1 px-2`} gap={1}>
         <Badge color="dark">{subject.code}</Badge>
         <div>{subject.name}</div>
       </HorizontalStack>
-    </div>
+    </ListGroupItem>
   );
 };
