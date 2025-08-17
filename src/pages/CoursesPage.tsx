@@ -2,22 +2,17 @@ import React, { FC, useCallback, useState } from 'react';
 import { Col, ListGroup, Row } from 'reactstrap';
 import { CourseRow } from '../components/CourseRow';
 import { SubjectRow } from '../components/SubjectRow';
-import { Course, ShallowCourse, Subject } from '../models/Schedule';
+import { Course, Subject } from '../models/Schedule';
 import { useApp, useSchedule, useUpdateApp } from '../providers';
+import { getCourseTerms } from '../utils';
 
 export const CoursesPage: FC = () => {
-  const { courses, subjects } = useSchedule();
-
-  const [selectedCourse, setSelectedCourse] = useState<ShallowCourse | undefined>();
+  const [selectedCourse, setSelectedCourse] = useState<Course | undefined>();
   const [selectedSubject, setSelectedSubject] = useState<Subject | undefined>();
   return (
     <Row className="border-bottom border-dark">
-      <SubjectBrowserSection
-        reporter={setSelectedSubject}
-        subjects={subjects}
-        selectedSubject={selectedSubject}
-      />
-      <CourseBrowserSection reporter={setSelectedCourse} courses={courses} />
+      <SubjectBrowserSection reporter={setSelectedSubject} selectedSubject={selectedSubject} />
+      <CourseBrowserSection reporter={setSelectedCourse} />
       <CourseInfoSection course={selectedCourse} />
     </Row>
   );
@@ -26,33 +21,23 @@ export const CoursesPage: FC = () => {
 export type CourseBrowserReducerAction = 'addCourse' | 'removeCourse' | 'selectCourse';
 
 interface CourseBrowserSectionProps {
-  readonly courses: ShallowCourse[];
-  readonly reporter: (course: ShallowCourse) => void;
+  readonly reporter: (course: Course) => void;
 }
 
-const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ courses, reporter }) => {
+const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ reporter }) => {
   const app = useApp();
+  const { courses } = useSchedule();
   const updateApp = useUpdateApp();
-  const schedule = useSchedule();
 
   const resolveAdded = useCallback(
-    (sc: ShallowCourse) => {
+    (sc: Course) => {
       return app.selectedCourses.includes(sc.code);
     },
     [app.selectedCourses],
   );
 
-  const getFullCourse = (sc: ShallowCourse): Course | undefined => {
-    const course = schedule.courses.find((v) => {
-      const nv = v as ShallowCourse;
-      return nv === sc;
-    });
-
-    return course;
-  };
-
   const handleReporting = useCallback(
-    (sc: ShallowCourse, action: CourseBrowserReducerAction) => {
+    (sc: Course, action: CourseBrowserReducerAction) => {
       switch (action) {
         case 'addCourse': {
           if (!resolveAdded(sc)) {
@@ -86,7 +71,7 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ courses, reporter
       <ListGroup>
         {courses.map((course, idx) => {
           const hash = crypto.randomUUID();
-          const fullCourse = getFullCourse(course);
+          const terms = getCourseTerms(course);
           return (
             <CourseRow
               striped={idx % 2 === 1}
@@ -96,7 +81,7 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ courses, reporter
               added={resolveAdded(course)}
               key={`course-${course.subject.code}-${course.code}-${hash}`}
               course={course}
-              schedules={fullCourse ? [fullCourse.term] : []}
+              schedules={terms}
             />
           );
         })}
@@ -106,12 +91,12 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ courses, reporter
 };
 
 interface SubjectBrowserSectionProps {
-  readonly subjects: Subject[];
   readonly selectedSubject?: Subject;
   readonly reporter: (s: Subject) => void;
 }
 
-const SubjectBrowserSection: FC<SubjectBrowserSectionProps> = ({ subjects, reporter }) => {
+const SubjectBrowserSection: FC<SubjectBrowserSectionProps> = ({ reporter }) => {
+  const { subjects } = useSchedule();
   return (
     <Col xs="3" className="p-0">
       <ListGroup>
@@ -133,7 +118,7 @@ const SubjectBrowserSection: FC<SubjectBrowserSectionProps> = ({ subjects, repor
 };
 
 interface CourseInfoSectionProps {
-  course?: ShallowCourse;
+  course?: Course;
 }
 
 const CourseInfoSection: FC<CourseInfoSectionProps> = ({ course }) => {

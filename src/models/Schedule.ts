@@ -13,19 +13,15 @@ export type DeliveryMode = 'In-Person' | 'Online' | 'Hybrid';
 
 export type TermPeriod = Term | Semester;
 
-export interface ShallowCourse {
+// TODO: Convert to ShallowCourse
+export interface Course {
   academicLevel: 'Undergraduate' | 'Graduate';
   credits: number;
   code: string;
   notes: string;
   subject: Subject;
   title: string;
-}
-
-export interface Course extends ShallowCourse {
-  deliveryMode: DeliveryMode;
-  endDate: Date;
-  enrollment: Capacity;
+  sections: CourseSection[];
   format:
     | 'Discussion'
     | 'Experiential'
@@ -34,6 +30,12 @@ export interface Course extends ShallowCourse {
     | 'Internship'
     | 'Seminar'
     | 'Workshop';
+}
+
+export interface CourseSection {
+  deliveryMode: DeliveryMode;
+  endDate: Date;
+  enrollment: Capacity;
   locations: string[]; // FKs to Locations?
   patterns: Pattern[]; // meeting patterns
   startDate: Date;

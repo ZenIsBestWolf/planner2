@@ -33,7 +33,11 @@ export const App: FC = () => {
   }, [refreshSchedule]);
 
   if (loading) {
-    return <Spinner />;
+    return (
+      <Container>
+        <Spinner />
+      </Container>
+    );
   }
 
   return (
@@ -42,7 +46,7 @@ export const App: FC = () => {
         <NavBar />
         <Container fluid>
           <Routes>
-            <Route path="/" element={<CoursesPage />} />
+            <Route index element={<CoursesPage />} />
             <Route path="/courses" element={<CoursesPage />} />
             <Route path="/info" element={<InfoPage />} />
             <Route path="/times" element={<TimesPage />} />

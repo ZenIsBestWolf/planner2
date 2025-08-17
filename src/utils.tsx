@@ -1,4 +1,5 @@
 import { ChangeEvent, Dispatch, SetStateAction, useCallback, useState } from 'react';
+import { Course, TermPeriod } from './models/Schedule';
 
 export const useObjectState = <T extends object>(
   initialState: T,
@@ -31,4 +32,13 @@ export const useCheckboxState = (
 
 export const noop = (): void => {
   /* noop */
+};
+
+export const getCourseTerms = (course: Course): TermPeriod[] => {
+  const { sections } = course;
+
+  const terms = sections.map((s) => s.term);
+
+  // Only allow unique values
+  return [...new Set(terms)];
 };

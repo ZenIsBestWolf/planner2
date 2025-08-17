@@ -1,4 +1,4 @@
-import { Course, CourseSection, Schedule, Subject, TermPeriod } from './models/Schedule';
+import { Course, CourseSection, Schedule, Subject } from './models/Schedule';
 import { RemoteEntry, RemoteResponse } from './models/Workday';
 
 import {
@@ -12,34 +12,8 @@ import {
 } from './models/Schedule';
 import { Hour, Minute } from './models/Time';
 
-interface ParserResult {
-  academicLevel: 'Undergraduate' | 'Graduate';
-  credits: number;
-  code: string;
-  notes: string;
-  subject: Subject;
-  title: string;
-  format:
-    | 'Discussion'
-    | 'Experiential'
-    | 'Laboratory'
-    | 'Lecture'
-    | 'Internship'
-    | 'Seminar'
-    | 'Workshop';
-  deliveryMode: DeliveryMode;
-  endDate: Date;
-  enrollment: Capacity;
-  locations: string[]; // FKs to Locations?
-  patterns: Pattern[]; // meeting patterns
-  startDate: Date;
-  tags: Record<string, string>; // this might be able to be improved upon
-  term: TermPeriod;
-  waitlist: Capacity;
-}
-
 interface SectionResponse {
-  course: Course;
+  course: Omit<Course, 'sections'>;
   section: CourseSection;
 }
 
@@ -112,15 +86,16 @@ const processData = (data: RemoteResponse): Schedule => {
         }
       }
       const courses = [...schedule.courses];
-      const lookup = schedule.courses.find((c) => c === sectionResponse.course);
-      if (lookup) {
-        const modifiedCourse = {
-          ...lookup,
-          sections: [...lookup.sections, sectionResponse.section],
-        } as Course;
-        courses.push(modifiedCourse);
+      const lookup = schedule.courses.find(
+        (c) =>
+          c.code === sectionResponse.course.code &&
+          c.subject.code === sectionResponse.course.subject.code,
+      );
+
+      if (!lookup) {
+        courses.push({ ...sectionResponse.course, sections: [sectionResponse.section] });
       } else {
-        courses.push(sectionResponse.course);
+        lookup.sections.push(sectionResponse.section);
       }
 
       const translatedSubjects: Subject[] = [];
@@ -330,27 +305,30 @@ const parseEntry = (raw: RemoteEntry, currentSchedule: Partial<Schedule>): Parse
     disabled: wlMaximum === 0 && wlOccuppied === 0,
   };
 
-  /* Object Compilation */
-  const entry: ParserResult = {
-    academicLevel: undergraduate ? 'Undergraduate' : 'Graduate',
-    code,
-    credits,
-    deliveryMode,
-    endDate,
-    enrollment,
-    format,
-    locations,
-    notes: raw.Public_Notes,
-    patterns,
-    startDate,
-    subject,
-    tags,
-    term,
-    title,
-    waitlist,
+  const sectionResponse: SectionResponse = {
+    course: {
+      academicLevel: undergraduate ? 'Undergraduate' : 'Graduate',
+      credits,
+      code,
+      notes: raw.Public_Notes,
+      subject,
+      title,
+      format,
+    },
+    section: {
+      enrollment,
+      deliveryMode,
+      endDate,
+      startDate,
+      term,
+      tags,
+      waitlist,
+      locations,
+      patterns,
+    },
   };
 
-  return { newSubjects: scheduler.subjects, sectionResponse: entry };
+  return { newSubjects: scheduler.subjects, sectionResponse };
 };
 
 const convertTime = (input: string): CourseTime => {
