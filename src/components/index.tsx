@@ -42,7 +42,7 @@ export const CheckboxButton: FC<CheckboxButtonProps> = ({
   inputClasses,
   onChange,
   ariaLabel,
-}) => {
+}: CheckboxButtonProps) => {
   const idSuffix = id ?? crypto.randomUUID();
   return (
     <>
@@ -71,12 +71,16 @@ export const CheckboxButton: FC<CheckboxButtonProps> = ({
   );
 };
 
+interface TimeProps {
+  time: CourseTime;
+}
+
 /**
  * Provides a correctly rendered time for a course based on user preferences
- * @param props Props object containing a {@link CourseTime} object
+ * @param {TimeProps} props Props object containing a {@link CourseTime} object
  * @returns A React Fragment containing the rendered time
  */
-export const Time: FC<{ time: CourseTime }> = ({ time }) => {
+export const Time: FC<TimeProps> = ({ time }: TimeProps) => {
   const { showMeridian } = useApp();
 
   const hour = time.hour <= 12 ? time.hour : showMeridian ? time.hour % 12 : time.hour;

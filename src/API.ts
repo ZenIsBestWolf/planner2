@@ -1,25 +1,24 @@
-import { Course, CourseSection, Schedule, Subject } from './models/Schedule';
+import {
+  academicLevels,
+  Course,
+  courseFormats,
+  CourseSection,
+  deliveryModes,
+  Schedule,
+  Subject,
+  termPeriods,
+} from './models/Schedule';
 import { RemoteEntry, RemoteResponse } from './models/Workday';
 
-import {
-  Capacity,
-  CourseTime,
-  DayCode,
-  DeliveryMode,
-  Pattern,
-  Semester,
-  Term,
-} from './models/Schedule';
+import { Capacity, CourseTime, DayCode, Pattern } from './models/Schedule';
 import { Hour, Minute } from './models/Time';
 
-interface SectionResponse {
-  course: Omit<Course, 'sections'>;
-  section: CourseSection;
-}
+type SectionlessCourse = Omit<Course, 'sections'>;
 
 interface ParsedResponse {
-  newSubjects: Subject[];
-  sectionResponse: SectionResponse;
+  newSubject?: Subject;
+  course: SectionlessCourse;
+  section: CourseSection;
 }
 
 export class ScheduleError extends Error {
@@ -44,7 +43,6 @@ class RequestError extends Error {
 }
 
 export const pullSchedule = async (): Promise<Schedule> => {
-  // const data: RemoteResponse = { Report_Entry: [] };
   let data: RemoteResponse;
   // get network data
 
@@ -67,6 +65,19 @@ export const pullSchedule = async (): Promise<Schedule> => {
   return processData(data);
 };
 
+const courseIdentifier = (course: { subject: Subject; code: string }): string =>
+  `${course.subject.code} ${course.code}`;
+
+const mapToArray = <T>(map: Map<string, T>): T[] => {
+  const result: T[] = [];
+
+  for (const value of map.values()) {
+    result.push(value);
+  }
+
+  return result;
+};
+
 const processData = (data: RemoteResponse): Schedule => {
   let schedule: Schedule = {
     subjects: [],
@@ -76,41 +87,32 @@ const processData = (data: RemoteResponse): Schedule => {
   const { Report_Entry: entries } = data;
 
   const subjectMap = new Map<string, Subject>();
+  const courseMap = new Map<string, Course>();
 
   for (const entry of entries) {
     try {
-      const { newSubjects, sectionResponse } = parseEntry(entry, schedule);
-      for (const subject of newSubjects) {
-        if (!subjectMap.get(subject.code)) {
-          subjectMap.set(subject.code, subject);
-        }
+      const { newSubject, course, section } = parseEntry(entry, subjectMap, courseMap);
+
+      if (newSubject) {
+        subjectMap.set(newSubject.code, newSubject);
       }
-      const courses = [...schedule.courses];
-      const lookup = schedule.courses.find(
-        (c) =>
-          c.code === sectionResponse.course.code &&
-          c.subject.code === sectionResponse.course.subject.code,
-      );
+
+      const lookup = courseMap.get(courseIdentifier(course));
 
       if (!lookup) {
-        courses.push({ ...sectionResponse.course, sections: [sectionResponse.section] });
+        courseMap.set(courseIdentifier(course), { ...course, sections: [section] });
       } else {
-        lookup.sections.push(sectionResponse.section);
-      }
-
-      const translatedSubjects: Subject[] = [];
-
-      for (const value of subjectMap.values()) {
-        translatedSubjects.push(value);
+        lookup.sections.push(section);
       }
 
       schedule = {
-        subjects: translatedSubjects,
-        courses: courses,
+        subjects: mapToArray(subjectMap),
+        courses: mapToArray(courseMap),
       };
     } catch (error) {
       if (error instanceof TimeError || error instanceof ScheduleError) {
         console.log(`An error occurred on an entry with title ${entry.Course_Title}`);
+        console.error(error);
         continue;
       }
 
@@ -121,75 +123,9 @@ const processData = (data: RemoteResponse): Schedule => {
   return schedule;
 };
 
-const parseEntry = (raw: RemoteEntry, currentSchedule: Partial<Schedule>): ParsedResponse => {
-  const scheduler: Schedule = {
-    subjects: [...(currentSchedule.subjects ?? [])],
-    courses: [...(currentSchedule.courses ?? [])],
-  };
-
-  /* Parse Academic_level */
-  let undergraduate: boolean;
-  if (raw.Academic_Level === 'Undergraduate') {
-    undergraduate = true;
-  } else if (raw.Academic_Level === 'Graduate') {
-    undergraduate = false;
-  } else {
-    throw new ScheduleError('Academic_Level missing from entry.');
-  }
-
-  /* Parse Credits */
-  const credits = +raw.Credits;
-  if (credits.toString() !== raw.Credits)
-    throw new ScheduleError(`Invalid credits value ${raw.Credits}`);
-
-  /* Parse Course_Tags */
-  const tagParts = raw.Course_Tags.split('; ');
-  const tags: Record<string, string> = {};
-  for (const part of tagParts) {
-    const portions = part.split(' :: ');
-    tags[portions[0]] = portions[1];
-  }
-
-  /* Parse Delivery_Mode */
-  if (
-    raw.Delivery_Mode !== 'In-Person' &&
-    raw.Delivery_Mode !== 'Online' &&
-    raw.Delivery_Mode !== 'Hybrid'
-  ) {
-    throw new ScheduleError(`Invalid Delivery_Mode passed: ${raw.Delivery_Mode}`);
-  }
-  const deliveryMode = raw.Delivery_Mode as DeliveryMode;
-
-  /* Parse Enrollment */
-  const elParts = raw.Enrolled_Capacity.split('/');
-  if (elParts.length !== 2) {
-    throw new ScheduleError('Enrolled_Capacity is misbehaving.');
-  }
-  const elRemaining = +elParts[0];
-  const elMaximum = +elParts[1];
-
-  const enrollment: Capacity = {
-    remaining: elRemaining,
-    maximum: elMaximum,
-    disabled: elMaximum === 0 && elRemaining === 0,
-  };
-
-  /* Parse Format */
-  const rawFormat = raw.Instructional_Format;
-  const format = rawFormat as
-    | 'Discussion'
-    | 'Experiential'
-    | 'Laboratory'
-    | 'Lecture'
-    | 'Internship'
-    | 'Seminar'
-    | 'Workshop';
-
-  if (rawFormat !== format) {
-    throw new ScheduleError(`Invalid format: ${rawFormat}`);
-  }
-
-  /* Parse Locations & Patterns */
+const getLocationsAndPatterns = (
+  raw: RemoteEntry,
+): { locations: string[]; patterns: Pattern[] } => {
   const locations: string[] = [];
   const patterns: Pattern[] = [];
   for (const pattern of raw.Section_Details.split('; ')) {
@@ -255,80 +191,176 @@ const parseEntry = (raw: RemoteEntry, currentSchedule: Partial<Schedule>): Parse
   }
   if (locations.length === 0) locations.push('None');
 
-  /* Parse Dates */
-  const startDate = new Date(raw.Course_Section_Start_Date);
-  const endDate = new Date(raw.Course_Section_End_Date);
+  return { locations, patterns };
+};
 
-  /* Parse Subject */
-  let subject: Subject;
+const getSubject = (raw: RemoteEntry): Subject => {
   const subjectCode = raw.Course_Title.substring(0, raw.Course_Title.indexOf(' '));
   const allSubjects = raw.Subject.split('; ');
   const trueSubject = allSubjects[allSubjects.length - 1];
-  const subjectLookup = scheduler.subjects.find((s) => s.code === subjectCode);
-  if (subjectLookup) {
-    // if (subjectLookup.name !== trueSubject) {
-    //   const fallbackSubject = raw.Course_Section_Owner;
-    //   if (!fallbackSubject.includes(subjectLookup.name))
-    //     throw new ScheduleError(
-    //       `Subject Code ${subjectCode} returned a lookup for ${subjectLookup.name} but was looking for ${trueSubject} (also tried ${fallbackSubject})`,
-    //     );
-    // }
-    subject = subjectLookup;
-  } else {
-    subject = {
-      code: subjectCode,
-      name: trueSubject,
-    };
-    scheduler.subjects.push(subject);
-  }
 
-  /* Parse Title */
-  const title = raw.Course_Title.split(' - ')[1];
+  return {
+    code: subjectCode,
+    name: trueSubject,
+  };
+};
 
-  /* Parse Code */
-  const code = raw.Course_Title.split(' - ')[0].replace(`${subject.code} `, '');
-
-  /* Parse Term */
-  const rawTerm = raw.Starting_Academic_Period_Type.replace(' Term', '');
-  const term = rawTerm as Term | Semester;
-  if (rawTerm !== term) throw new ScheduleError(`Invalid term: ${rawTerm}`);
-
-  /* Parse Waitlist */
+const getWaitlist = (raw: RemoteEntry): Capacity => {
   const wlParts = raw.Waitlist_Waitlist_Capacity.split('/');
   if (wlParts.length !== 2) throw new ScheduleError('Waitlist_Waitlist_Capacity is misbehaving.');
   const wlOccuppied = +wlParts[0];
   const wlMaximum = +wlParts[1];
 
-  const waitlist: Capacity = {
+  return {
     remaining: wlMaximum - wlOccuppied,
     maximum: wlMaximum,
     disabled: wlMaximum === 0 && wlOccuppied === 0,
+  } satisfies Capacity;
+};
+
+const getEnrollment = (raw: RemoteEntry): Capacity => {
+  const elParts = raw.Enrolled_Capacity.split('/');
+  if (elParts.length !== 2) {
+    throw new ScheduleError('Enrolled_Capacity is misbehaving.');
+  }
+  const elRemaining = +elParts[0];
+  const elMaximum = +elParts[1];
+
+  return {
+    remaining: elRemaining,
+    maximum: elMaximum,
+    disabled: elMaximum === 0 && elRemaining === 0,
+  } satisfies Capacity;
+};
+
+const getTags = (raw: RemoteEntry): Record<string, string> => {
+  const tagParts = raw.Course_Tags.split('; ');
+  const tags: Record<string, string> = {};
+  for (const part of tagParts) {
+    const portions = part.split(' :: ');
+    tags[portions[0]] = portions[1];
+  }
+  return tags;
+};
+
+const assertScheduleLiteral = <T extends string>(
+  raw: RemoteEntry,
+  valueOrKey: string,
+  list: readonly T[],
+  errMsg?: string,
+): T => {
+  let value = valueOrKey;
+  if (valueOrKey in raw) {
+    value = raw[valueOrKey as keyof typeof raw];
+  }
+
+  const result = list.find((v) => v === value);
+  if (result) {
+    return result;
+  }
+
+  throw new ScheduleError(errMsg);
+};
+
+/**
+ * Get a Sectionless Course object from a Workday API response
+ * @param raw Workday API response object
+ * @param subject Subject object of course to parse
+ * @returns Parsed course without sections
+ */
+const parseCourse = (raw: RemoteEntry, subject: Subject): SectionlessCourse => {
+  /* Parse Academic_level */
+  const academicLevel = assertScheduleLiteral(
+    raw,
+    'Academic_Level',
+    academicLevels,
+    `Invalid Delivery_Mode passed: ${raw.Delivery_Mode}`,
+  );
+
+  /* Parse Credits */
+  const credits = Number.parseFloat(raw.Credits);
+  if (Number.isNaN(credits)) throw new ScheduleError(`Invalid credits value ${raw.Credits}`);
+
+  /* Parse Course Code */
+  const code = raw.Course_Title.split(' - ')[0].replace(`${subject.code} `, '');
+
+  /* Parse Title */
+  const title = raw.Course_Title.split(' - ')[1];
+
+  /* Parse Format */
+  const format = assertScheduleLiteral(
+    raw,
+    'Instructional_Format',
+    courseFormats,
+    `Invalid format: ${raw.Instructional_Format}`,
+  );
+
+  return {
+    academicLevel,
+    credits,
+    code,
+    notes: raw.Public_Notes,
+    title,
+    format,
+    subject,
+  } satisfies SectionlessCourse;
+};
+
+const parseEntry = (
+  raw: RemoteEntry,
+  subjectMap: Map<string, Subject>,
+  courseMap: Map<string, Course>,
+): ParsedResponse => {
+  /* Parse Subject */
+  const calculatedSubject = getSubject(raw);
+  const subjectLookup = subjectMap.get(calculatedSubject.code);
+  const subject = subjectLookup ?? calculatedSubject;
+
+  const courseLookup = courseMap.get(raw.Course_Title.split(' - ')[0]);
+
+  const course = courseLookup ?? parseCourse(raw, subject);
+
+  /* Parse Course_Tags */
+  const tags = getTags(raw);
+
+  /* Parse Delivery_Mode */
+  const deliveryMode = assertScheduleLiteral(
+    raw,
+    'Delivery_Mode',
+    deliveryModes,
+    `Invalid Delivery_Mode passed: ${raw.Delivery_Mode}`,
+  );
+
+  /* Parse Enrollment */
+  const enrollment = getEnrollment(raw);
+
+  /* Parse Locations & Patterns */
+  const { locations, patterns } = getLocationsAndPatterns(raw);
+
+  /* Parse Dates */
+  const startDate = new Date(raw.Course_Section_Start_Date);
+  const endDate = new Date(raw.Course_Section_End_Date);
+
+  /* Parse Term */
+  const rawTerm = raw.Starting_Academic_Period_Type.replace(' Term', '');
+  const term = assertScheduleLiteral(raw, rawTerm, termPeriods, `Invalid term: ${rawTerm}`);
+
+  /* Parse Waitlist */
+  const waitlist = getWaitlist(raw);
+
+  const section: CourseSection = {
+    enrollment,
+    deliveryMode,
+    endDate,
+    startDate,
+    term,
+    tags,
+    waitlist,
+    locations,
+    patterns,
   };
 
-  const sectionResponse: SectionResponse = {
-    course: {
-      academicLevel: undergraduate ? 'Undergraduate' : 'Graduate',
-      credits,
-      code,
-      notes: raw.Public_Notes,
-      subject,
-      title,
-      format,
-    },
-    section: {
-      enrollment,
-      deliveryMode,
-      endDate,
-      startDate,
-      term,
-      tags,
-      waitlist,
-      locations,
-      patterns,
-    },
-  };
-
-  return { newSubjects: scheduler.subjects, sectionResponse };
+  return { newSubject: subjectLookup ? undefined : subject, course, section };
 };
 
 const convertTime = (input: string): CourseTime => {

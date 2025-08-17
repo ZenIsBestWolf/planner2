@@ -5,31 +5,48 @@ export interface Schedule {
   readonly subjects: Subject[];
 }
 
-export type Term = 'A' | 'B' | 'C' | 'D' | 'E1' | 'E2';
+export const terms = ['A', 'B', 'C', 'D', 'E1', 'E2'] as const;
 
-export type Semester = 'Spring' | 'Fall' | 'Summer';
+export type Term = (typeof terms)[number];
 
-export type DeliveryMode = 'In-Person' | 'Online' | 'Hybrid';
+export const semesters = ['Spring', 'Fall', 'Summer'] as const;
+
+export type Semester = (typeof semesters)[number];
+
+export const deliveryModes = ['In-Person', 'Online', 'Hybrid'] as const;
+
+export type DeliveryMode = (typeof deliveryModes)[number];
+
+export const termPeriods = [...terms, ...semesters] as const;
 
 export type TermPeriod = Term | Semester;
 
+export const courseFormats = [
+  'Discussion',
+  'Experiential',
+  'Laboratory',
+  'Lecture',
+  'Internship',
+  'Seminar',
+  'Workshop',
+] as const;
+
+export type CourseFormat = (typeof courseFormats)[number];
+
+export const academicLevels = ['Undergraduate', 'Graduate'] as const;
+
+export type AcademicLevel = (typeof academicLevels)[number];
+
 // TODO: Convert to ShallowCourse
 export interface Course {
-  academicLevel: 'Undergraduate' | 'Graduate';
+  academicLevel: AcademicLevel;
   credits: number;
   code: string;
   notes: string;
   subject: Subject;
   title: string;
   sections: CourseSection[];
-  format:
-    | 'Discussion'
-    | 'Experiential'
-    | 'Laboratory'
-    | 'Lecture'
-    | 'Internship'
-    | 'Seminar'
-    | 'Workshop';
+  format: CourseFormat;
 }
 
 export interface CourseSection {

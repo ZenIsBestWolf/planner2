@@ -15,7 +15,6 @@ export const CourseRow: FC<{
 }> = ({ course, added, reporter, schedules, striped }) => {
   return (
     <ListGroupItem
-      flush
       className={`border-0 rounded-0 p-0${striped ? ' list-group-item-secondary' : ''}`}
     >
       <HorizontalStack
