@@ -24,6 +24,7 @@ interface CheckboxButtonProps {
   readonly buttonClasses?: string;
   readonly inputClasses?: string;
   readonly onChange?: React.ChangeEventHandler<HTMLInputElement>;
+  readonly ariaLabel?: string;
 }
 
 /**
@@ -40,25 +41,29 @@ export const CheckboxButton: FC<CheckboxButtonProps> = ({
   buttonClasses,
   inputClasses,
   onChange,
+  ariaLabel,
 }) => {
-  const inputId = id ?? `checkbox-${crypto.randomUUID()}`;
+  const idSuffix = id ?? crypto.randomUUID();
   return (
     <>
       <Input
         onChange={onChange}
         disabled={disabled}
-        id={inputId}
+        id={`checkbox-${idSuffix}`}
         type="checkbox"
         className={`btn-check${inputClasses ? ` ${inputClasses}` : ``}`}
+        aria-labelledby={ariaLabel ? `label-${idSuffix}` : undefined}
       />
 
       <Button
         tag="label"
-        htmlFor={inputId}
+        htmlFor={`checkbox-${idSuffix}`}
+        id={`label-${idSuffix}`}
         outline={outline}
         color={color}
         className={buttonClasses}
         disabled={disabled}
+        aria-label={ariaLabel}
       >
         {children}
       </Button>

@@ -53,6 +53,8 @@ export const TermButton: FC<TermButtonProps> = ({
   if (displayOnly) {
     return (
       <div
+        // TODO: Use screenreader testing to make this all read properly.
+        aria-label={isDisabled ? 'Unavailable term' : 'Term'}
         className={`border border-secondary rounded-5 text-black bg-${color}-subtle p-1${isDisabled ? ' btn disabled' : ''}`}
       >
         {term}
@@ -65,6 +67,7 @@ export const TermButton: FC<TermButtonProps> = ({
       onChange={setState}
       buttonClasses={`border border-secondary rounded-5 text-black bg-${color}-subtle p-1`}
       disabled={isDisabled}
+      ariaLabel={isDisabled ? 'Unavailable term' : 'Term'}
     >
       {term}
     </CheckboxButton>

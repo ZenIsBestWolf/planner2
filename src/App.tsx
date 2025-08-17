@@ -43,8 +43,11 @@ export const App: FC = () => {
   return (
     <ApplicationContext.Provider value={{ application, setApplication }}>
       <SchedulerContext.Provider value={{ schedule, refreshSchedule }}>
+        <a href="#main" className="sr-only">
+          Skip to main content
+        </a>
         <NavBar />
-        <Container fluid>
+        <Container tag="main" id="main" fluid>
           <Routes>
             <Route index element={<CoursesPage />} />
             <Route path="/courses" element={<CoursesPage />} />

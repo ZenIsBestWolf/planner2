@@ -1,13 +1,13 @@
 import React, { FC } from 'react';
 import { Button, ButtonToolbar, ListGroupItem } from 'reactstrap';
 import { HorizontalStack } from '.';
-import { ShallowCourse, TermPeriod } from '../models/Schedule';
+import { Course, TermPeriod } from '../models/Schedule';
 import { CourseBrowserReducerAction } from '../pages/CoursesPage';
 import { noop } from '../utils';
 import { TermButton } from './TermButton';
 
 export const CourseRow: FC<{
-  readonly course: ShallowCourse;
+  readonly course: Course;
   readonly schedules: TermPeriod[];
   readonly added: boolean;
   readonly striped: boolean;
@@ -52,6 +52,7 @@ const CourseButton: FC<{
       color={isAdded ? 'danger' : 'success'}
       className="small rounded"
       onClick={reporter}
+      aria-label={isAdded ? 'Remove course' : 'Add course'}
     >
       <i className={`bi bi-${isAdded ? 'dash' : 'plus'}-circle-fill`}></i>
     </Button>
