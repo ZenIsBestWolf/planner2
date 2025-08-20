@@ -46,10 +46,11 @@ class RequestError extends Error {
 
 export const pullSchedule = async (): Promise<Schedule> => {
   let data: RemoteResponse;
-  // get network data
+  // TODO: this could be better lord.
+  const url = window.location.hostname === 'localhost' ? `http://localhost:8081` : `https://gcbp.wpi.institute`
 
   // const response = await fetch(`https://courselistings.wpi.edu/assets/prod-data.json`);
-  const response = await fetch(`http://localhost:8081/assets/prod-data.json`);
+  const response = await fetch(`${url}/assets/prod-data.json`);
 
   const body = await response.text();
 
