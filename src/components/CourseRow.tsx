@@ -1,7 +1,7 @@
 import React, { FC } from 'react';
 import { Button, ButtonToolbar, ListGroupItem } from 'reactstrap';
 import { HorizontalStack } from '.';
-import { Course, TermPeriod } from '../models/Schedule';
+import { Course, TermPeriod, termPeriods } from '../models/Schedule';
 import { CourseBrowserReducerAction } from '../pages/CoursesPage';
 import { noop } from '../utils';
 import { TermButton } from './TermButton';
@@ -65,17 +65,60 @@ interface TermGroupProps {
   readonly reporter: (term: TermPeriod, status: string) => void;
 }
 
+const getTermStatus = (targetTerm: TermPeriod, allTerms: TermPeriod[]): TermStatus | undefined => {
+  switch (targetTerm) {
+    case 'A':
+    case 'B': {
+      if (allTerms.includes('Fall')) {
+        return undefined;
+      }
+
+      return 'Available';
+    }
+
+    case 'C':
+    case 'D': {
+      if (allTerms.includes('Spring')) {
+        return undefined;
+      }
+
+      return 'Available';
+    }
+
+    case 'E1':
+    case 'E2': {
+      if (allTerms.includes('Summer')) {
+        return undefined;
+      }
+
+      return 'Available';
+    }
+
+    default:
+      return 'Available';
+  }
+};
+
 const TermGroup: FC<TermGroupProps> = ({ schedules }) => {
-  const statuses: TermStatus[] = ['Available', 'Waitlisted', 'Full', 'Disabled', 'Unavailable'];
+  const termStatuses = new Map<TermPeriod, TermStatus>();
+  for (const term of termPeriods) {
+    const lookup = schedules.find((t) => t === term);
+
+    const status = lookup ? getTermStatus(term, schedules) : 'Unavailable';
+    if (status) {
+      termStatuses.set(term, status);
+    }
+  }
+
   return (
     <ButtonToolbar className="gap-2">
-      {schedules.map((term, idx) => {
+      {termPeriods.map((term, idx) => {
         return (
           <TermButton
             displayOnly
             key={`term-${term}-${idx}`}
             term={term}
-            status={statuses[idx]}
+            status={termStatuses.get(term)}
             reporter={noop}
           />
         );

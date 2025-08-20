@@ -295,11 +295,14 @@ const parseCourse = (raw: RemoteEntry, subject: Subject): SectionlessCourse => {
     `Invalid format: ${raw.Instructional_Format}`,
   );
 
+  const { Public_Notes: notes, Course_Description: description } = raw;
+
   return {
     academicLevel,
     credits,
     code,
-    notes: raw.Public_Notes,
+    notes,
+    description,
     title,
     format,
     subject,
@@ -348,6 +351,8 @@ const parseEntry = (
   /* Parse Waitlist */
   const waitlist = getWaitlist(raw);
 
+  const { Instructors: instructors } = raw;
+
   const section: CourseSection = {
     enrollment,
     deliveryMode,
@@ -358,6 +363,7 @@ const parseEntry = (
     waitlist,
     locations,
     patterns,
+    instructors,
   };
 
   return { newSubject: subjectLookup ? undefined : subject, course, section };

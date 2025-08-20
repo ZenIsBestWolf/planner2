@@ -1,10 +1,13 @@
 # planner2
-by Zen Dignan <zen@dignan.dev>
+Created by Zen Dignan <zen@dignan.dev>
+
+This project and repository is not affiliated with nor endorsed by Worcester Polytechnic Institute.
 
 ## Getting Started
 You'll need the following installed:
 - Git
 - Node with NPM
+- [Gompei's CORS Bypass](https://github.com/zenisbestwolf/gcbp) running on port `8081`.
 ### Developing
 Set up the development environment like so:
 1. Clone this repository.

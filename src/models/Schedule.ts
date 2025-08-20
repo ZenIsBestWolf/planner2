@@ -47,6 +47,7 @@ export interface Course {
   title: string;
   sections: CourseSection[];
   format: CourseFormat;
+  description: string;
 }
 
 export interface CourseSection {
@@ -59,6 +60,7 @@ export interface CourseSection {
   tags: Record<string, string>; // this might be able to be improved upon
   term: TermPeriod;
   waitlist: Capacity;
+  instructors: string;
 }
 
 export interface Capacity {

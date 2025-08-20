@@ -5,15 +5,28 @@ import { SubjectRow } from '../components/SubjectRow';
 import { Course, Subject } from '../models/Schedule';
 import { useApp, useSchedule, useUpdateApp } from '../providers';
 import { getCourseTerms } from '../utils';
+import { SectionContainer } from '../components/SectionContainer';
 
 export const CoursesPage: FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | undefined>();
   const [selectedSubject, setSelectedSubject] = useState<Subject | undefined>();
   return (
     <Row className="border-bottom border-dark">
-      <SubjectBrowserSection reporter={setSelectedSubject} selectedSubject={selectedSubject} />
-      <CourseBrowserSection reporter={setSelectedCourse} />
-      <CourseInfoSection course={selectedCourse} />
+      <Col md="4" lg="3" xl="2" className="p-0">
+        <SectionContainer>
+          <SubjectBrowserSection reporter={setSelectedSubject} />
+        </SectionContainer>
+      </Col>
+      <Col className="border-start border-end border-dark p-0">
+        <SectionContainer>
+          <CourseBrowserSection reporter={setSelectedCourse} selectedSubject={selectedSubject} />
+        </SectionContainer>
+      </Col>
+      <Col lg="3" xl="2">
+        <SectionContainer>
+          <CourseInfoSection course={selectedCourse} />
+        </SectionContainer>
+      </Col>
     </Row>
   );
 };
@@ -22,9 +35,10 @@ export type CourseBrowserReducerAction = 'addCourse' | 'removeCourse' | 'selectC
 
 interface CourseBrowserSectionProps {
   readonly reporter: (course: Course) => void;
+  readonly selectedSubject?: Subject;
 }
 
-const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ reporter }) => {
+const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ reporter, selectedSubject }) => {
   const app = useApp();
   const { courses } = useSchedule();
   const updateApp = useUpdateApp();
@@ -35,6 +49,10 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ reporter }) => {
     },
     [app.selectedCourses],
   );
+
+  const filteredCourses = selectedSubject
+    ? courses.filter((c) => c.subject.code === selectedSubject.code)
+    : courses;
 
   const handleReporting = useCallback(
     (sc: Course, action: CourseBrowserReducerAction) => {
@@ -67,53 +85,47 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ reporter }) => {
   );
 
   return (
-    <Col xs="6" className="border-start border-end border-dark p-0">
-      <ListGroup>
-        {courses.map((course, idx) => {
-          const hash = crypto.randomUUID();
-          const terms = getCourseTerms(course);
-          return (
-            <CourseRow
-              striped={idx % 2 === 1}
-              reporter={(action: CourseBrowserReducerAction) => {
-                handleReporting(course, action);
-              }}
-              added={resolveAdded(course)}
-              key={`course-${course.subject.code}-${course.code}-${hash}`}
-              course={course}
-              schedules={terms}
-            />
-          );
-        })}
-      </ListGroup>
-    </Col>
+    <ListGroup>
+      {filteredCourses.map((course, idx) => {
+        const terms = getCourseTerms(course);
+        return (
+          <CourseRow
+            striped={idx % 2 === 1}
+            reporter={(action: CourseBrowserReducerAction) => {
+              handleReporting(course, action);
+            }}
+            added={resolveAdded(course)}
+            key={`course-${course.subject.code}-${course.code}`}
+            course={course}
+            schedules={terms}
+          />
+        );
+      })}
+    </ListGroup>
   );
 };
 
 interface SubjectBrowserSectionProps {
-  readonly selectedSubject?: Subject;
   readonly reporter: (s: Subject) => void;
 }
 
 const SubjectBrowserSection: FC<SubjectBrowserSectionProps> = ({ reporter }) => {
   const { subjects } = useSchedule();
   return (
-    <Col xs="3" className="p-0">
-      <ListGroup>
-        {subjects.map((subject, idx) => {
-          return (
-            <SubjectRow
-              report={() => {
-                reporter(subject);
-              }}
-              subject={subject}
-              key={`subject-${subject.code}`}
-              isStriped={idx % 2 === 1}
-            />
-          );
-        })}
-      </ListGroup>
-    </Col>
+    <ListGroup>
+      {subjects.map((subject, idx) => {
+        return (
+          <SubjectRow
+            report={() => {
+              reporter(subject);
+            }}
+            subject={subject}
+            key={`subject-${subject.code}`}
+            isStriped={idx % 2 === 1}
+          />
+        );
+      })}
+    </ListGroup>
   );
 };
 
@@ -122,5 +134,35 @@ interface CourseInfoSectionProps {
 }
 
 const CourseInfoSection: FC<CourseInfoSectionProps> = ({ course }) => {
-  return <Col xs="3">{course && <span>Course Info display for {course.code}</span>}</Col>;
+  if (!course) {
+    return (
+      <>
+        <h2>No Course Selected</h2>
+        <p>Select a course to get started.</p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h2>{course.title}</h2>
+      <p>
+        {course.subject.code} {course.code}
+      </p>
+      <hr />
+      <div dangerouslySetInnerHTML={{ __html: course.description }} />
+      <hr />
+      <h4>Sections</h4>
+      {course.sections.map((section, idx) => {
+        return (
+          <div key={idx}>
+            {section.term} - {section.instructors}
+          </div>
+        );
+      })}
+      <hr />
+      <h4>Raw Object</h4>
+      <pre style={{ overflow: 'auto' }}>{JSON.stringify(course)}</pre>
+    </>
+  );
 };

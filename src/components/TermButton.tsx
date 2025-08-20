@@ -13,13 +13,13 @@ interface TermButtonProps {
   // yellow = unavailable (waitlist full)
   // greyed out = unavailable (not offerred)
   // blue = waitlist only
-  readonly status: TermStatus;
+  readonly status?: TermStatus;
   readonly reporter: (status: CourseBrowserReducerAction) => void;
   readonly displayOnly?: boolean;
   readonly disabled?: boolean;
 }
 
-const colorReducer = (status: TermStatus) => {
+const colorReducer = (status?: TermStatus) => {
   switch (status) {
     case 'Available':
       return 'success';
@@ -27,10 +27,10 @@ const colorReducer = (status: TermStatus) => {
       return 'danger';
     case 'Full':
       return 'warning';
-    case 'Unavailable':
-      return 'secondary';
     case 'Waitlisted':
       return 'primary';
+    default:
+      return 'secondary';
   }
 };
 
@@ -49,6 +49,10 @@ export const TermButton: FC<TermButtonProps> = ({
   useEffect(() => {
     // reporter(term, state.toString());
   }, [reporter, state, term]);
+
+  if (!status) {
+    return null;
+  }
 
   if (displayOnly) {
     return (

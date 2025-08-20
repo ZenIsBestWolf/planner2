@@ -10,7 +10,7 @@ export const NavBar: FC = () => {
   }, [isExpanded]);
 
   return (
-    <Navbar className="bg-danger border-bottom" dark expand="xs">
+    <Navbar style={{ height: '4vh' }} className="bg-danger border-bottom" dark expand="xs">
       <NavbarBrand href="/">Planner</NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse navbar isOpen={isExpanded}>

@@ -47,7 +47,7 @@ export const App: FC = () => {
           Skip to main content
         </a>
         <NavBar />
-        <Container tag="main" id="main" fluid>
+        <Container className="main-content" tag="main" id="main" fluid>
           <Routes>
             <Route index element={<CoursesPage />} />
             <Route path="/courses" element={<CoursesPage />} />
