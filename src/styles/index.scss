@@ -6,6 +6,11 @@ a {
   text-decoration: none;
 }
 
+#main {
+  overflow: auto;
+  height: 96vh;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -15,9 +20,4 @@ a {
   overflow: hidden;
   clip: rect(0,0,0,0);
   border: 0;
-}
-
-.main-content {
-  overflow: auto;
-  height: 96vh;
 }

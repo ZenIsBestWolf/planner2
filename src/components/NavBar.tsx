@@ -1,19 +1,21 @@
-import React, { FC, useCallback, useState } from 'react';
+import React, { FC, useCallback } from 'react';
 import { useNavigate } from 'react-router';
 import { Collapse, Nav, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink } from 'reactstrap';
+import { useApp, useUpdateApp } from '../providers';
 
 export const NavBar: FC = () => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const { navbarCollapsed } = useApp();
+  const updateApp = useUpdateApp();
 
   const toggle = useCallback(() => {
-    setIsExpanded(!isExpanded);
-  }, [isExpanded]);
+    updateApp('navbarCollapsed', !navbarCollapsed);
+  }, [navbarCollapsed, updateApp]);
 
   return (
-    <Navbar style={{ height: '4vh' }} className="bg-danger border-bottom" dark expand="xs">
+    <Navbar className="bg-danger border-bottom" dark expand="xs">
       <NavbarBrand href="/">Planner</NavbarBrand>
       <NavbarToggler onClick={toggle} />
-      <Collapse navbar isOpen={isExpanded}>
+      <Collapse navbar isOpen={navbarCollapsed}>
         <Nav navbar id="navbar" className="me-auto" pills>
           <NavbarButton destination="/courses" label="Courses" />
           <NavbarButton destination="/info" label="Info" />

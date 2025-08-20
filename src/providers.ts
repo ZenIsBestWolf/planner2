@@ -10,6 +10,7 @@ export interface Application {
   readonly selectedCourses: string[];
   readonly name: string;
   readonly showMeridian: boolean;
+  readonly navbarCollapsed: boolean;
 }
 
 interface ApplicationContextProps {

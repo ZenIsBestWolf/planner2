@@ -1,5 +1,5 @@
 import { ChangeEvent, Dispatch, SetStateAction, useCallback, useState } from 'react';
-import { Course, TermPeriod } from './models/Schedule';
+import { Course, CourseSection, TermPeriod, TermStatus } from './models/Schedule';
 
 export const useObjectState = <T extends object>(
   initialState: T,
@@ -34,11 +34,44 @@ export const noop = (): void => {
   /* noop */
 };
 
-export const getCourseTerms = (course: Course): TermPeriod[] => {
-  const { sections } = course;
+const sectionAvailability = (section: CourseSection): TermStatus => {
+  const { enrollment, waitlist } = section;
 
-  const terms = sections.map((s) => s.term);
+  const hasEnrollmentSeats = enrollment.disabled ? false : enrollment.remaining !== 0;
+  const hasWaitlistSeats = waitlist.disabled ? false : waitlist.remaining !== 0;
 
-  // Only allow unique values
-  return [...new Set(terms)];
+  if (!hasEnrollmentSeats && !hasWaitlistSeats) {
+    return 'Full';
+  }
+
+  if (!hasEnrollmentSeats && hasWaitlistSeats) {
+    return 'Waitlisted';
+  }
+
+  return 'Available';
 };
+
+export const getCourseAvailability = (course: Course): Map<TermPeriod, TermStatus> => {
+  const validTerms = getCourseTerms(course);
+  const result = new Map<TermPeriod, TermStatus>();
+
+  for (const term of validTerms) {
+    let status: TermStatus | undefined;
+
+    const validSections = course.sections.filter((s) => s.term === term);
+
+    for (const section of validSections) {
+      status = sectionAvailability(section);
+    }
+
+    status ??= 'Disabled';
+
+    result.set(term, status);
+  }
+
+  return result;
+};
+
+export const getCourseTerms = (course: Course): TermPeriod[] => [
+  ...new Set(course.sections.map((s) => s.term)),
+];

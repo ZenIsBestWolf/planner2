@@ -1,18 +1,24 @@
 import React, { FC } from 'react';
 import { Button, ButtonToolbar, ListGroupItem } from 'reactstrap';
 import { HorizontalStack } from '.';
-import { Course, TermPeriod, termPeriods } from '../models/Schedule';
+import {
+  Course,
+  isSemester,
+  isTerm,
+  TermPeriod,
+  termPeriods,
+  TermStatus,
+} from '../models/Schedule';
 import { CourseBrowserReducerAction } from '../pages/CoursesPage';
-import { noop } from '../utils';
+import { getCourseAvailability, getCourseTerms, noop } from '../utils';
 import { TermButton } from './TermButton';
 
 export const CourseRow: FC<{
   readonly course: Course;
-  readonly schedules: TermPeriod[];
   readonly added: boolean;
   readonly striped: boolean;
   reporter: (action: CourseBrowserReducerAction) => void;
-}> = ({ course, added, reporter, schedules, striped }) => {
+}> = ({ course, added, reporter, striped }) => {
   return (
     <ListGroupItem
       className={`border-0 rounded-0 p-0${striped ? ' list-group-item-secondary' : ''}`}
@@ -35,7 +41,7 @@ export const CourseRow: FC<{
         </div>
         {/* Spacer */}
         <div className="ms-auto" />
-        <TermGroup reporter={noop} schedules={schedules} />
+        <TermGroup reporter={noop} course={course} />
       </HorizontalStack>
     </ListGroupItem>
   );
@@ -58,71 +64,55 @@ const CourseButton: FC<{
   );
 };
 
-type TermStatus = 'Available' | 'Waitlisted' | 'Full' | 'Disabled' | 'Unavailable';
+const fillUnavailableTerms = (
+  course: Course,
+  statuses: Map<TermPeriod, TermStatus>,
+): Map<TermPeriod, TermStatus> => {
+  const result = new Map<TermPeriod, TermStatus>();
+
+  const terms = getCourseTerms(course);
+
+  const hasSemesters = terms.map((t) => isSemester(t)).includes(true);
+  const hasTerms = terms.map((t) => isTerm(t)).includes(true);
+
+  for (const term of termPeriods) {
+    const lookup = statuses.get(term);
+    if (lookup) {
+      result.set(term, lookup);
+      continue;
+    }
+
+    if (hasSemesters && isSemester(term)) {
+      result.set(term, 'Unavailable');
+    }
+
+    if (hasTerms && isTerm(term)) {
+      result.set(term, 'Unavailable');
+    }
+  }
+
+  return result;
+};
 
 interface TermGroupProps {
-  readonly schedules: TermPeriod[];
+  readonly course: Course;
   readonly reporter: (term: TermPeriod, status: string) => void;
 }
 
-const getTermStatus = (targetTerm: TermPeriod, allTerms: TermPeriod[]): TermStatus | undefined => {
-  switch (targetTerm) {
-    case 'A':
-    case 'B': {
-      if (allTerms.includes('Fall')) {
-        return undefined;
-      }
-
-      return 'Available';
-    }
-
-    case 'C':
-    case 'D': {
-      if (allTerms.includes('Spring')) {
-        return undefined;
-      }
-
-      return 'Available';
-    }
-
-    case 'E1':
-    case 'E2': {
-      if (allTerms.includes('Summer')) {
-        return undefined;
-      }
-
-      return 'Available';
-    }
-
-    default:
-      return 'Available';
-  }
-};
-
-const TermGroup: FC<TermGroupProps> = ({ schedules }) => {
-  const termStatuses = new Map<TermPeriod, TermStatus>();
-  for (const term of termPeriods) {
-    const lookup = schedules.find((t) => t === term);
-
-    const status = lookup ? getTermStatus(term, schedules) : 'Unavailable';
-    if (status) {
-      termStatuses.set(term, status);
-    }
-  }
+const TermGroup: FC<TermGroupProps> = ({ course }) => {
+  const termStatuses = fillUnavailableTerms(course, getCourseAvailability(course));
 
   return (
     <ButtonToolbar className="gap-2">
-      {termPeriods.map((term, idx) => {
-        return (
-          <TermButton
-            displayOnly
-            key={`term-${term}-${idx}`}
-            term={term}
-            status={termStatuses.get(term)}
-            reporter={noop}
-          />
-        );
-      })}
+      {termPeriods.map((term, idx) => (
+        <TermButton
+          displayOnly
+          key={`term-${term}-${idx}`}
+          term={term}
+          status={termStatuses.get(term)}
+          reporter={noop}
+        />
+      ))}
     </ButtonToolbar>
   );
 };

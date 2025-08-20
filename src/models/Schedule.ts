@@ -1,4 +1,5 @@
 import { Hour, Minute } from './Time';
+import { RemoteEntry } from './Workday';
 
 export interface Schedule {
   readonly courses: Course[];
@@ -19,9 +20,13 @@ export type DeliveryMode = (typeof deliveryModes)[number];
 
 export const termPeriods = [...terms, ...semesters] as const;
 
+export const isTerm = (period: TermPeriod): period is Term => terms.includes(period as Term);
+export const isSemester = (period: TermPeriod): period is Semester =>
+  semesters.includes(period as Semester);
+
 export type TermPeriod = Term | Semester;
 
-export const courseFormats = [
+export const sectionFormats = [
   'Discussion',
   'Experiential',
   'Laboratory',
@@ -31,7 +36,11 @@ export const courseFormats = [
   'Workshop',
 ] as const;
 
-export type CourseFormat = (typeof courseFormats)[number];
+export type SectionFormat = (typeof sectionFormats)[number];
+
+export const termStatuses = ['Available', 'Waitlisted', 'Full', 'Disabled', 'Unavailable'] as const;
+
+export type TermStatus = (typeof termStatuses)[number];
 
 export const academicLevels = ['Undergraduate', 'Graduate'] as const;
 
@@ -46,7 +55,6 @@ export interface Course {
   subject: Subject;
   title: string;
   sections: CourseSection[];
-  format: CourseFormat;
   description: string;
 }
 
@@ -61,6 +69,9 @@ export interface CourseSection {
   term: TermPeriod;
   waitlist: Capacity;
   instructors: string;
+  format: SectionFormat;
+  // DEBUG. WILL INCREASE MEMORY USAGE DRASTICALLY. DO NOT LEAVE IN FOR PROD.
+  raw?: RemoteEntry;
 }
 
 export interface Capacity {

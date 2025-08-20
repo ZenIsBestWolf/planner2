@@ -4,7 +4,6 @@ import { CourseRow } from '../components/CourseRow';
 import { SubjectRow } from '../components/SubjectRow';
 import { Course, Subject } from '../models/Schedule';
 import { useApp, useSchedule, useUpdateApp } from '../providers';
-import { getCourseTerms } from '../utils';
 import { SectionContainer } from '../components/SectionContainer';
 
 export const CoursesPage: FC = () => {
@@ -86,21 +85,17 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ reporter, selecte
 
   return (
     <ListGroup>
-      {filteredCourses.map((course, idx) => {
-        const terms = getCourseTerms(course);
-        return (
-          <CourseRow
-            striped={idx % 2 === 1}
-            reporter={(action: CourseBrowserReducerAction) => {
-              handleReporting(course, action);
-            }}
-            added={resolveAdded(course)}
-            key={`course-${course.subject.code}-${course.code}`}
-            course={course}
-            schedules={terms}
-          />
-        );
-      })}
+      {filteredCourses.map((course, idx) => (
+        <CourseRow
+          striped={idx % 2 === 1}
+          reporter={(action: CourseBrowserReducerAction) => {
+            handleReporting(course, action);
+          }}
+          added={resolveAdded(course)}
+          key={`course-${course.subject.code}-${course.code}`}
+          course={course}
+        />
+      ))}
     </ListGroup>
   );
 };

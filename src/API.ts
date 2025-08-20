@@ -1,10 +1,10 @@
 import {
   academicLevels,
   Course,
-  courseFormats,
   CourseSection,
   deliveryModes,
   Schedule,
+  sectionFormats,
   Subject,
   termPeriods,
 } from './models/Schedule';
@@ -92,6 +92,11 @@ const processData = (data: RemoteResponse): Schedule => {
   for (const entry of entries) {
     try {
       const { newSubject, course, section } = parseEntry(entry, subjectMap, courseMap);
+
+      // If the section that was parsed has this tag, it's not real. It's for waitlist and interest groups.
+      if ('Course Type' in section.tags && section.tags['Course Type'] === 'Waitlist Section') {
+        continue;
+      }
 
       if (newSubject) {
         subjectMap.set(newSubject.code, newSubject);
@@ -207,7 +212,10 @@ const getSubject = (raw: RemoteEntry): Subject => {
 
 const getWaitlist = (raw: RemoteEntry): Capacity => {
   const wlParts = raw.Waitlist_Waitlist_Capacity.split('/');
-  if (wlParts.length !== 2) throw new ScheduleError('Waitlist_Waitlist_Capacity is misbehaving.');
+  if (wlParts.length !== 2) {
+    throw new ScheduleError('Waitlist_Waitlist_Capacity is misbehaving.');
+  }
+
   const wlOccuppied = +wlParts[0];
   const wlMaximum = +wlParts[1];
 
@@ -223,13 +231,14 @@ const getEnrollment = (raw: RemoteEntry): Capacity => {
   if (elParts.length !== 2) {
     throw new ScheduleError('Enrolled_Capacity is misbehaving.');
   }
-  const elRemaining = +elParts[0];
+
+  const elOccuppied = +elParts[0];
   const elMaximum = +elParts[1];
 
   return {
-    remaining: elRemaining,
+    remaining: elMaximum - elOccuppied,
     maximum: elMaximum,
-    disabled: elMaximum === 0 && elRemaining === 0,
+    disabled: elMaximum === 0 && elOccuppied === 0,
   } satisfies Capacity;
 };
 
@@ -287,14 +296,6 @@ const parseCourse = (raw: RemoteEntry, subject: Subject): SectionlessCourse => {
   /* Parse Title */
   const title = raw.Course_Title.split(' - ')[1];
 
-  /* Parse Format */
-  const format = assertScheduleLiteral(
-    raw,
-    'Instructional_Format',
-    courseFormats,
-    `Invalid format: ${raw.Instructional_Format}`,
-  );
-
   const { Public_Notes: notes, Course_Description: description } = raw;
 
   return {
@@ -304,7 +305,6 @@ const parseCourse = (raw: RemoteEntry, subject: Subject): SectionlessCourse => {
     notes,
     description,
     title,
-    format,
     subject,
   } satisfies SectionlessCourse;
 };
@@ -340,6 +340,14 @@ const parseEntry = (
   /* Parse Locations & Patterns */
   const { locations, patterns } = getLocationsAndPatterns(raw);
 
+  /* Parse Format */
+  const format = assertScheduleLiteral(
+    raw,
+    'Instructional_Format',
+    sectionFormats,
+    `Invalid format: ${raw.Instructional_Format}`,
+  );
+
   /* Parse Dates */
   const startDate = new Date(raw.Course_Section_Start_Date);
   const endDate = new Date(raw.Course_Section_End_Date);
@@ -364,6 +372,9 @@ const parseEntry = (
     locations,
     patterns,
     instructors,
+    format,
+    // DEBUG. WILL INCREASE MEMORY USAGE DRASTICALLY. DO NOT LEAVE IN FOR PROD.
+    raw,
   };
 
   return { newSubject: subjectLookup ? undefined : subject, course, section };
@@ -386,5 +397,5 @@ const convertTime = (input: string): CourseTime => {
 
   const minute = rawMinute as Minute;
 
-  return { hour, minute };
+  return { hour, minute } satisfies CourseTime;
 };
