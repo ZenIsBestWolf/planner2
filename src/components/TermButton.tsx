@@ -21,16 +21,21 @@ interface TermButtonProps {
 
 const colorReducer = (status?: TermStatus) => {
   switch (status) {
-    case 'Available':
+    case 'Available': {
       return 'success';
-    case 'Disabled':
+    }
+    case 'Disabled': {
       return 'danger';
-    case 'Full':
+    }
+    case 'Full': {
       return 'warning';
-    case 'Waitlisted':
+    }
+    case 'Waitlisted': {
       return 'primary';
-    default:
+    }
+    default: {
       return 'secondary';
+    }
   }
 };
 

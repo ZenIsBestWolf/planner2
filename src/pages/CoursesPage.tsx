@@ -65,7 +65,10 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ reporter, selecte
 
         case 'removeCourse': {
           if (resolveAdded(sc)) {
-            updateApp('selectedCourses', [...app.selectedCourses.filter((c) => c !== sc.code)]);
+            updateApp(
+              'selectedCourses',
+              app.selectedCourses.filter((c) => c !== sc.code),
+            );
           }
           break;
         }
@@ -76,7 +79,7 @@ const CourseBrowserSection: FC<CourseBrowserSectionProps> = ({ reporter, selecte
         }
 
         default: {
-          throw Error('Unknown action');
+          throw new Error('Unknown action');
         }
       }
     },

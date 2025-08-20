@@ -25,12 +25,14 @@ export class ScheduleError extends Error {
   public constructor(msg?: string) {
     super(msg);
   }
+  name = 'ScheduleError';
 }
 
 class TimeError extends ScheduleError {
   public constructor(msg?: string) {
     super(msg);
   }
+  name = 'TimeError';
 }
 
 class RequestError extends Error {
@@ -104,10 +106,10 @@ const processData = (data: RemoteResponse): Schedule => {
 
       const lookup = courseMap.get(courseIdentifier(course));
 
-      if (!lookup) {
-        courseMap.set(courseIdentifier(course), { ...course, sections: [section] });
-      } else {
+      if (lookup) {
         lookup.sections.push(section);
+      } else {
+        courseMap.set(courseIdentifier(course), { ...course, sections: [section] });
       }
 
       schedule = {
@@ -176,12 +178,12 @@ const getLocationsAndPatterns = (
     try {
       startTime = convertTime(times[0]);
       endTime = convertTime(times[1]);
-    } catch (e: unknown) {
-      if (e instanceof TimeError) {
+    } catch (error) {
+      if (error instanceof TimeError) {
         throw new ScheduleError(`Error in parsing times for ${raw.Course_Title}`);
       }
 
-      throw e as Error;
+      throw error as Error;
     }
 
     const newPattern: Pattern = {
@@ -199,9 +201,12 @@ const getLocationsAndPatterns = (
   return { locations, patterns };
 };
 
+// TODO: Review if changes to this function would result in incorrect subject calculation.
 const getSubject = (raw: RemoteEntry): Subject => {
+  // eslint-disable-next-line unicorn/prefer-string-slice
   const subjectCode = raw.Course_Title.substring(0, raw.Course_Title.indexOf(' '));
   const allSubjects = raw.Subject.split('; ');
+  // eslint-disable-next-line unicorn/prefer-at
   const trueSubject = allSubjects[allSubjects.length - 1];
 
   return {
