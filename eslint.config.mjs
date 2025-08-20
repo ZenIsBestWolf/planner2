@@ -13,10 +13,13 @@ export default tseslint.config(
   eslintPrettierRecommended,
   // Future contributors, if the linter is too aggressive, below is the line you probably want to remove.
   unicorn.configs['all'],
-  js.configs.all,
-  ...tseslint.configs.all,
   {
     settings: { react: { version: '19.1.1' } },
+    extends: [
+      js.configs.recommended,
+      ...tseslint.configs.strictTypeChecked,
+      ...tseslint.configs.stylisticTypeChecked,
+    ],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2025,
