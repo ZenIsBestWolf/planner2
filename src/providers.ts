@@ -8,9 +8,11 @@ interface ScheduleContextProps {
 
 export interface Application {
   readonly selectedCourses: string[];
-  readonly name: string;
   readonly showMeridian: boolean;
   readonly navbarCollapsed: boolean;
+  readonly theme: 'dark' | 'light';
+  readonly seenDisclaimer: boolean;
+  readonly name?: string;
 }
 
 interface ApplicationContextProps {

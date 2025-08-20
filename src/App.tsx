@@ -10,20 +10,21 @@ import { SchedulesPage } from './pages/SchedulesPage';
 import { TimesPage } from './pages/TimesPage';
 import { Application, ApplicationContext, SchedulerContext } from './providers';
 import { useObjectState } from './utils';
+import { Disclaimer } from './components/Disclaimer';
 
 export const App: FC = () => {
   const [schedule, setSchedule] = useState<Schedule>({} as never);
   const [loading, setLoading] = useState(true);
-  const [application, setApplication] = useObjectState<Application>({
+  const [application, setApplication, rawSetApplication] = useObjectState<Application>({
     selectedCourses: [],
-    name: 'Zen',
     showMeridian: true,
     navbarCollapsed: false,
+    theme: 'light',
+    seenDisclaimer: false,
   });
 
-  // TODO: Need a way to save Application data/preferences to local storage
-
   const refreshSchedule = useCallback(async () => {
+    setLoading(true);
     const newSched = await pullSchedule();
     setSchedule(newSched);
     setLoading(false);
@@ -31,7 +32,16 @@ export const App: FC = () => {
 
   useEffect(() => {
     void refreshSchedule();
-  }, [refreshSchedule]);
+
+    const existingPreferences = localStorage.getItem('preferences');
+    if (existingPreferences) {
+      rawSetApplication(JSON.parse(existingPreferences) as Application);
+    }
+  }, [rawSetApplication, refreshSchedule]);
+
+  useEffect(() => {
+    localStorage.setItem('preferences', JSON.stringify(application));
+  }, [application]);
 
   if (loading) {
     return (
@@ -47,6 +57,7 @@ export const App: FC = () => {
         <a href="#main" className="sr-only">
           Skip to main content
         </a>
+        <Disclaimer />
         <NavBar />
         <Container tag="main" id="main" fluid>
           <Routes>
