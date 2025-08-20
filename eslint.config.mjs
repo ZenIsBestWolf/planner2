@@ -6,22 +6,20 @@ import tseslint from 'typescript-eslint';
 import eslintPrettierRecommended from 'eslint-plugin-prettier/recommended';
 import react from 'eslint-plugin-react';
 import unicorn from 'eslint-plugin-unicorn';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
 
 export default tseslint.config(
   { ignores: ['dist', 'webpack.config.js'] },
   eslintPrettierRecommended,
   // Future contributors, if the linter is too aggressive, below is the line you probably want to remove.
   unicorn.configs['all'],
+  js.configs.all,
+  ...tseslint.configs.all,
   {
-    settings: { react: { version: '19.0.0' } },
-    extends: [
-      js.configs.recommended,
-      ...tseslint.configs.strictTypeChecked,
-      ...tseslint.configs.stylisticTypeChecked,
-    ],
+    settings: { react: { version: '19.1.1' } },
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
-      ecmaVersion: 2020,
+      ecmaVersion: 2025,
       globals: globals.browser,
       parserOptions: {
         project: ['./src/tsconfig.json'],
@@ -32,14 +30,16 @@ export default tseslint.config(
       'react-hooks': reactHooks,
       'react-refresh': reactRefresh,
       react,
+      'jsx-a11y': jsxA11y,
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
       ...react.configs.recommended.rules,
       ...react.configs['jsx-runtime'].rules,
+      ...jsxA11y.flatConfigs.strict.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       '@typescript-eslint/restrict-template-expressions': 'off',
-      // My files, my rules!.
+      // My files, my rules!
       'unicorn/filename-case': 'off',
       // Extremely annoying
       'unicorn/prevent-abbreviations': 'off',
