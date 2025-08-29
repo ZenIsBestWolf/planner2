@@ -16,7 +16,8 @@ export const NavBar: FC = () => {
       <NavbarBrand href="/">Planner</NavbarBrand>
       <NavbarToggler onClick={toggle} />
       <Collapse navbar isOpen={navbarCollapsed}>
-        <Nav navbar id="navbar" className="me-auto" pills>
+        <div className='ms-auto' />
+        <Nav navbar id="navbar" pills>
           <NavbarButton destination="/courses" label="Courses" />
           <NavbarButton destination="/info" label="Info" />
           <NavbarButton destination="/times" label="Times" />

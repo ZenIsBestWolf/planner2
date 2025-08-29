@@ -46,7 +46,6 @@ export const academicLevels = ['Undergraduate', 'Graduate'] as const;
 
 export type AcademicLevel = (typeof academicLevels)[number];
 
-// TODO: Convert to ShallowCourse
 export interface Course {
   academicLevel: AcademicLevel;
   credits: number;

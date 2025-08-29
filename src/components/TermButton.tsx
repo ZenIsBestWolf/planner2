@@ -1,5 +1,5 @@
 import React, { FC, useEffect } from 'react';
-import { TermPeriod } from '../models/Schedule';
+import { isSemester, TermPeriod } from '../models/Schedule';
 import { CourseBrowserReducerAction } from '../pages/CoursesPage';
 import { useCheckboxState } from '../utils';
 import { CheckboxButton } from '.';
@@ -50,6 +50,8 @@ export const TermButton: FC<TermButtonProps> = ({
   const color = colorReducer(status);
   const isDisabled = disabled ?? status === 'Unavailable';
 
+  const termType = isSemester(term) ? 'Semester' : 'Term';
+
   // Report changes in usage
   useEffect(() => {
     // reporter(term, state.toString());
@@ -76,7 +78,7 @@ export const TermButton: FC<TermButtonProps> = ({
       onChange={setState}
       buttonClasses={`border border-secondary rounded-5 text-black bg-${color}-subtle p-1`}
       disabled={isDisabled}
-      ariaLabel={isDisabled ? 'Unavailable term' : 'Term'}
+      ariaLabel={`${term} ${termType} - ${status}`}
     >
       {term}
     </CheckboxButton>
