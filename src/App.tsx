@@ -45,9 +45,12 @@ export const App: FC = () => {
 
   if (loading) {
     return (
-      <Container>
-        <Spinner />
-      </Container>
+      <main className="position-absolute top-50 start-50 translate-middle text-center">
+        <Spinner>
+          <span className="sr-only">Loading...</span>
+        </Spinner>
+        <div>The WPI Planner is loading. If this takes too long, check your connection.</div>
+      </main>
     );
   }
 

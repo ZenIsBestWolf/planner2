@@ -5,6 +5,7 @@ import { SubjectRow } from '../components/SubjectRow';
 import { Course, Subject } from '../models/Schedule';
 import { useApp, useSchedule, useUpdateApp } from '../providers';
 import { SectionContainer } from '../components/SectionContainer';
+import { SectionEntry } from '../components/SectionEntry';
 
 export const CoursesPage: FC = () => {
   const [selectedCourse, setSelectedCourse] = useState<Course | undefined>();
@@ -114,9 +115,7 @@ const SubjectBrowserSection: FC<SubjectBrowserSectionProps> = ({ reporter }) => 
       {subjects.map((subject, idx) => {
         return (
           <SubjectRow
-            report={() => {
-              reporter(subject);
-            }}
+            report={() => reporter(subject)}
             subject={subject}
             key={`subject-${subject.code}`}
             isStriped={idx % 2 === 1}
@@ -148,16 +147,11 @@ const CourseInfoSection: FC<CourseInfoSectionProps> = ({ course }) => {
         {course.subject.code} {course.code}
       </p>
       <hr />
-      <div dangerouslySetInnerHTML={{ __html: course.description }} />
-      <hr />
       <h4>Sections</h4>
-      {course.sections.map((section, idx) => {
-        return (
-          <div key={idx}>
-            {section.term} - {section.instructors}
-          </div>
-        );
-      })}
+      {course.sections.map((section, idx) => <SectionEntry section={section} key={idx} />)}
+      <hr />
+      <h4>Course Description</h4>
+      <div dangerouslySetInnerHTML={{ __html: course.description }} />
       <hr />
       <h4>Raw Object</h4>
       <pre style={{ overflow: 'auto' }}>{JSON.stringify(course)}</pre>

@@ -87,7 +87,7 @@ export const Time: FC<TimeProps> = ({ time }: TimeProps) => {
 
   return (
     <>
-      {hour}:{time.minute}
+      {hour < 10 && !showMeridian ? `0${hour}` : hour}:{time.minute < 10 ? `0${time.minute}` : time.minute}
       {showMeridian && hour < 12 ? ' AM' : ' PM'}
     </>
   );
