@@ -1,3 +1,14 @@
+# Archived
+
+This project has been archived and abandoned. I graduated from WPI in December of 2025 so I no longer have motivation to continue working on this.
+
+Linked below is another student's more complete implementation. It relies on a constant polling of the remote data, which is not ideal, but the UX and completeness is far better.
+https://github.com/lexm2/wpiplannerV2
+
+In the event someone wants to use this code as a jumping off point for a better implementation than above, I am licensing my code under the MIT license. Just please leave a small accredation (and reach out!).
+
+I had hoped to provide the successor to the program my mentor left behind, but that's OK! Please reach out to me if someone is looking to pick this up and would like help understanding the code.
+
 # planner2
 Created by Zen Dignan <zen@dignan.dev>
 
